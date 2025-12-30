@@ -9,9 +9,7 @@ part of '../internet_connection_checker_plus.dart';
 ///
 /// This allows for complete customization of how connectivity is checked for
 /// each endpoint.
-typedef ConnectivityCheckCallback = Future<InternetCheckResult> Function(
-  InternetCheckOption option,
-);
+typedef ConnectivityCheckCallback = Future<InternetCheckResult> Function(InternetCheckOption option);
 
 /// A utility class for checking internet connectivity status with
 /// performance tracking and smart endpoint selection.
@@ -53,51 +51,24 @@ class InternetConnection {
   List<InternetCheckOption> _getPlatformDefaultOptions() {
     if (kIsWeb) {
       return [
-        InternetCheckOption(
-          uri: Uri.parse('https://corsproxy.io/?https://www.google.com/favicon.ico'),
-          timeout: Duration(seconds: 2),
-        ),
-        InternetCheckOption(
-          uri: Uri.parse('https://jsonplaceholder.typicode.com/posts/1'),
-          timeout: Duration(seconds: 2),
-        ),
-        InternetCheckOption(
-          uri: Uri.parse('https://httpbin.org/ip'),
-          timeout: Duration(seconds: 2),
-        ),
+        InternetCheckOption(uri: Uri.parse('https://corsproxy.io/?https://www.google.com/favicon.ico'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://jsonplaceholder.typicode.com/posts/1'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://httpbin.org/ip'), timeout: Duration(seconds: 2)),
         // Super fast endpoint
-        InternetCheckOption(
-          uri: Uri.parse('https://httpbin.org/status/200'),
-          timeout: Duration(milliseconds: 1500),
-          headers: {'Accept': '*/*'},
-        ),
+        InternetCheckOption(uri: Uri.parse('https://httpbin.org/status/200'), timeout: Duration(milliseconds: 1500), headers: {'Accept': '*/*'}),
       ];
     } else {
       return [
-        InternetCheckOption(
-          uri: Uri.parse('https://www.google.com'),
-          timeout: Duration(seconds: 2),
-        ),
-        InternetCheckOption(
-          uri: Uri.parse('https://www.cloudflare.com'),
-          timeout: Duration(seconds: 2),
-        ),
+        InternetCheckOption(uri: Uri.parse('https://www.google.com'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://www.cloudflare.com'), timeout: Duration(seconds: 2)),
         InternetCheckOption(
           uri: Uri.parse('https://one.one.one.one'),
           timeout: Duration(milliseconds: 1500), // DNS service, usually fastest
         ),
-        InternetCheckOption(
-          uri: Uri.parse('https://icanhazip.com/'),
-          timeout: Duration(seconds: 2),
-        ),
-        InternetCheckOption(
-          uri: Uri.parse('https://flashstart.com/'),
-          timeout: Duration(seconds: 2),
-        ),
-        InternetCheckOption(
-          uri: Uri.parse('https://controld.com/'),
-          timeout: Duration(seconds: 2),
-        ),
+        InternetCheckOption(uri: Uri.parse('https://randomuser.me/api/?inc=gender'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://api.bitbucket.org/2.0/repositories/'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://flashstart.com/'), timeout: Duration(seconds: 2)),
+        InternetCheckOption(uri: Uri.parse('https://controld.com/'), timeout: Duration(seconds: 2)),
       ];
     }
   }
@@ -145,9 +116,7 @@ class InternetConnection {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   /// Checks if the [Uri] specified in [option] is reachable.
-  Future<InternetCheckResult> _checkReachabilityFor(
-    InternetCheckOption option,
-  ) async {
+  Future<InternetCheckResult> _checkReachabilityFor(InternetCheckOption option) async {
     try {
       if (customConnectivityCheck != null) {
         return customConnectivityCheck!(option);
@@ -155,15 +124,9 @@ class InternetConnection {
 
       final response = await http.head(option.uri, headers: option.headers).timeout(option.timeout);
 
-      return InternetCheckResult(
-        option: option,
-        isSuccess: option.responseStatusFn(response),
-      );
+      return InternetCheckResult(option: option, isSuccess: option.responseStatusFn(response));
     } catch (_) {
-      return InternetCheckResult(
-        option: option,
-        isSuccess: false,
-      );
+      return InternetCheckResult(option: option, isSuccess: false);
     }
   }
 
@@ -304,8 +267,9 @@ class InternetConnection {
     final successRate = stats.successCount / math.max(1, stats.totalAttempts);
 
     // Response time score (faster = better)
-    final avgResponseTimeMs =
-        stats.successCount > 0 ? stats.totalResponseTime.inMilliseconds / stats.successCount : 10000; // 10 seconds default if no successes
+    final avgResponseTimeMs = stats.successCount > 0
+        ? stats.totalResponseTime.inMilliseconds / stats.successCount
+        : 10000; // 10 seconds default if no successes
 
     // Normalize: 0-2000ms = good, 2000-10000ms = decreasing score
     final timeScore = avgResponseTimeMs <= 2000 ? 1.0 : math.max(0.1, 1.0 - (avgResponseTimeMs - 2000) / 8000);
@@ -385,14 +349,11 @@ class InternetConnection {
 
   void _startListeningToConnectivityChanges() {
     if (_connectivitySubscription != null) return;
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
-      (_) {
-        if (_statusController.hasListener) {
-          _maybeEmitStatusUpdate();
-        }
-      },
-      onError: (_, __) {},
-    );
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((_) {
+      if (_statusController.hasListener) {
+        _maybeEmitStatusUpdate();
+      }
+    }, onError: (_, __) {});
   }
 
   /// Public API
@@ -414,13 +375,15 @@ class InternetConnection {
 
   /// Get performance report for debugging
   Map<String, dynamic> getPerformanceReport() {
-    return _endpointStats.map((key, stats) => MapEntry(key, {
-          'totalAttempts': stats.totalAttempts,
-          'successCount': stats.successCount,
-          'successRate': stats.successCount / math.max(1, stats.totalAttempts),
-          'avgResponseTimeMs': stats.successCount > 0 ? stats.totalResponseTime.inMilliseconds / stats.successCount : 0,
-          'lastUpdated': stats.lastUpdated.toIso8601String(),
-        }));
+    return _endpointStats.map(
+      (key, stats) => MapEntry(key, {
+        'totalAttempts': stats.totalAttempts,
+        'successCount': stats.successCount,
+        'successRate': stats.successCount / math.max(1, stats.totalAttempts),
+        'avgResponseTimeMs': stats.successCount > 0 ? stats.totalResponseTime.inMilliseconds / stats.successCount : 0,
+        'lastUpdated': stats.lastUpdated.toIso8601String(),
+      }),
+    );
   }
 }
 
