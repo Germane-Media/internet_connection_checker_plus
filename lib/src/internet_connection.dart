@@ -51,11 +51,22 @@ class InternetConnection {
   List<InternetCheckOption> _getPlatformDefaultOptions() {
     if (kIsWeb) {
       return [
-        InternetCheckOption(uri: Uri.parse('https://corsproxy.io/?https://www.google.com/favicon.ico'), timeout: Duration(seconds: 2)),
-        InternetCheckOption(uri: Uri.parse('https://jsonplaceholder.typicode.com/posts/1'), timeout: Duration(seconds: 2)),
         InternetCheckOption(uri: Uri.parse('https://httpbin.org/ip'), timeout: Duration(seconds: 2)),
         // Super fast endpoint
         InternetCheckOption(uri: Uri.parse('https://httpbin.org/status/200'), timeout: Duration(milliseconds: 1500), headers: {'Accept': '*/*'}),
+
+        // Google DNS-over-HTTPS — Access-Control-Allow-Origin: *
+        InternetCheckOption(
+          uri: Uri.parse('https://dns.google/resolve?name=google.com&type=A'),
+          timeout: Duration(seconds: 2),
+          headers: {'Accept': 'application/dns-json'},
+        ),
+        // Cloudflare DNS-over-HTTPS — Access-Control-Allow-Origin: *
+        InternetCheckOption(
+          uri: Uri.parse('https://cloudflare-dns.com/dns-query?name=cloudflare.com&type=A'),
+          timeout: Duration(seconds: 2),
+          headers: {'Accept': 'application/dns-json'},
+        ),
       ];
     } else {
       return [
